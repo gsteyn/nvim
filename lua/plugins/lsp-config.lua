@@ -21,7 +21,7 @@ return {
 			local keymap = vim.keymap
 			local opts = { noremap = true, silent = true }
 
-			local on_attach = function(_client, bufnr)
+			local on_attach = function(_, bufnr)
 				opts.buffer = bufnr
 
 				-- set keybinds
