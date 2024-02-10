@@ -31,6 +31,9 @@ return {
                 null_ls.builtins.diagnostics.eslint_d.with({
                     filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
                 }),
+                null_ls.builtins.formatting.taplo.with({
+                    filetypes = { "toml" },
+                }),
             },
         })
 
