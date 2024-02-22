@@ -1,3 +1,74 @@
+local on_attach = function(_, bufnr)
+    local nmap = function(keys, func, desc)
+        if desc then
+            desc = "LSP: " .. desc
+        end
+
+        vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+    end
+
+    nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+    nmap("<leader>ca", function()
+        vim.lsp.buf.code_action({ context = { only = { "quickfix", "refactor", "source" } } })
+    end, "[C]ode [A]ction")
+
+    nmap("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
+    nmap("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+    nmap("gI", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
+    nmap("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type [D]efinition")
+    nmap("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+    nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+
+    -- See `:help K` for why this keymap
+    nmap("K", vim.lsp.buf.hover, "Hover Documentation")
+    nmap("<C-k>", vim.lsp.buf.signature_help, "Signature Documentation")
+
+    -- Lesser used LSP functionality
+    nmap("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
+    nmap("<leader>wa", vim.lsp.buf.add_workspace_folder, "[W]orkspace [A]dd Folder")
+    nmap("<leader>wr", vim.lsp.buf.remove_workspace_folder, "[W]orkspace [R]emove Folder")
+    nmap("<leader>wl", function()
+        print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+    end, "[W]orkspace [L]ist Folders")
+
+    -- Create a command `:Format` local to the LSP buffer
+    vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
+        vim.lsp.buf.format()
+    end, { desc = "Format current buffer with LSP" })
+end
+
+local servers = {
+    tsserver = {},
+    html = { filetypes = { "html", "twig", "hbs" } },
+    gopls = {},
+
+    rust_analyzer = {
+        filetypes = { "rust" },
+        -- NOTE: commented out because lspconfig/util isn't loaded yet in this scope.
+        --      a potential fix is to move this on_attach function into the local scope of the config.
+        -- root_dir = require("lspconfig/util").root_pattern("Cargo.toml"),
+        settings = {
+            ["rust-analyzer"] = {
+                cargo = {
+                    allFeatures = true,
+                },
+            },
+        },
+    },
+
+    lua_ls = {
+        Lua = {
+            workspace = { checkThirdParty = false },
+            telemetry = { enable = false },
+            diagnostics = {
+                globals = { "vim" },
+                -- NOTE: toggle below to ignore Lua_LS's noisy `missing-fields` warnings
+                -- disable = { "missing-fields" },
+            },
+        },
+    },
+}
+
 return {
     {
         "neovim/nvim-lspconfig",
@@ -5,102 +76,31 @@ return {
         dependencies = {
             "williamboman/mason.nvim",
             "williamboman/mason-lspconfig.nvim",
+            "folke/neodev.nvim",
         },
         config = function()
             require("mason").setup()
+            require("mason-lspconfig").setup()
 
-            require("mason-lspconfig").setup({
-                ensure_installed = { "lua_ls", "rust_analyzer", "gopls", "tsserver" },
+            require("neodev").setup()
+
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
+            capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
+
+            local mason_lspconfig = require("mason-lspconfig")
+            mason_lspconfig.setup({
+                ensure_installed = vim.tbl_keys(servers),
             })
 
-            local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
-            local lspconfig = require("lspconfig")
-            local util = require("lspconfig/util")
-
-            local keymap = vim.keymap
-            local opts = { noremap = true, silent = true }
-
-            local on_attach = function(_, bufnr)
-                opts.buffer = bufnr
-
-                -- set keybinds
-                opts.desc = "Show LSP references"
-                keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts) -- show definition, lsp_references
-
-                opts.desc = "Go to declarations"
-                keymap.set("n", "gD", vim.lsp.buf.declaration, opts) -- go to declaration
-
-                opts.desc = "Show LSP definitions"
-                keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts) -- show lsp definitions
-
-                opts.desc = "Show LSP implementations"
-                keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
-
-                opts.desc = "Show LSP type definitions"
-                keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts) -- show lsp type definitions
-
-                opts.desc = "See available code actions"
-                keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts) -- see available code actions
-
-                opts.desc = "Smart rename"
-                keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- see available code actions
-
-                opts.desc = "Show buffer diagnostics"
-                keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts) -- show diagnostics for file
-
-                opts.desc = "Show line diagnostics"
-                keymap.set("n", "<leader>d", vim.diagnostics.open_float, opts) -- show diagnostics for line
-
-                opts.desc = "Go to previous diagnostic"
-                keymap.set("n", "[d", vim.diagnostics.goto_prev, opts) -- jump to previous diagnostic in buffer
-
-                opts.desc = "Go to next diagnostic"
-                keymap.set("n", "]d", vim.diagnostics.goto_next, opts) -- jump to the next diagnostic in buffer
-
-                opts.desc = "Show documentation under cursor"
-                keymap.set("n", "K", vim.lsp.buf.hover, opts) -- show documentation under cursor
-
-                opts.desc = "Restart LSP"
-                keymap.set("n", "<leader>rs", "<cmd>LspRestart<CR>", opts) -- restart lsp
-            end
-
-            lspconfig.lua_ls.setup({
-                capabilities = capabilities,
-                on_attach = on_attach,
-                settings = {
-                    Lua = {
-                        diagnostics = {
-                            globals = { "vim" },
-                        },
-                        workspace = {
-                            -- make ls aware of runtime files
-                            library = {
-                                [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-                                [vim.fn.stdpath("config") .. "/lua"] = true,
-                            },
-                        },
-                    },
-                },
-            })
-
-            lspconfig.gopls.setup({
-                capabilities = capabilities,
-                on_attach = on_attach,
-            })
-
-            lspconfig.rust_analyzer.setup({
-                capabilities = capabilities,
-                on_attach = on_attach,
-                filetypes = { "rust" },
-                root_dir = util.root_pattern("Cargo.toml"),
-                settings = {
-                    ["rust-analyzer"] = {
-                        cargo = {
-                            allFeatures = true,
-                        },
-                    },
-                },
+            mason_lspconfig.setup_handlers({
+                function(server_name)
+                    require("lspconfig")[server_name].setup({
+                        capabilities = capabilities,
+                        on_attach = on_attach,
+                        settings = servers[server_name],
+                        filetypes = (servers[server_name] or {}).filetypes,
+                    })
+                end,
             })
         end,
     },
