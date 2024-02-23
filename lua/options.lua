@@ -8,6 +8,6 @@ vim.opt.number=true
 vim.opt.relativenumber=true
 -- line wrap
 vim.opt.wrap=false
-vim.opt.colorcolumn="80"
+vim.opt.colorcolumn="121"
 -- scroll & cursor location
 vim.opt.scrolloff=8
