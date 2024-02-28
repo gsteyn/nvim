@@ -13,3 +13,13 @@ vim.keymap.set("i", "<C-c>", "<Esc>")
 
 -- go back to previous buffer
 vim.keymap.set("n", "<leader>b", "<cmd>b#<cr>")
+
+-- Copy to clipboard
+vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { desc = "Copy to clipboard" })
+vim.keymap.set("n", "<leader>Y", '"+yg_', { desc = "Copy to clipboard" })
+vim.keymap.set("n", "<leader>yy", '"+yy', { desc = "Copy line to clipboard" })
+
+-- Paste from clipboard
+vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { desc = "Paste from clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>P", '"+P', { desc = "Paste from clipboard in line above cursor" })
+
