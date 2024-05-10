@@ -22,7 +22,9 @@ return {
             },
         }
     },
-    config = function()
+    config = function(_, opts)
+        require("neo-tree").setup(opts)
+
         vim.keymap.set("n", "<leader>ee", ":Neotree toggle<CR>")
     end
 }
