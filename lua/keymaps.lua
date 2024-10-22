@@ -5,6 +5,16 @@ vim.keymap.set("n", "<leader>s", ":w<CR>")
 vim.keymap.set("n", "<leader>q", ":wq<CR>")
 vim.keymap.set("n", "<leader>qa", ":wqa<CR>")
 
+-- resize buffers
+vim.keymap.set("n", "<leader>w<", "30<C-w><")
+vim.keymap.set("n", "<leader>w>", "30<C-w>>")
+vim.keymap.set("n", "<leader>w+", "20<C-w>+")
+vim.keymap.set("n", "<leader>w-", "20<C-w>-")
+vim.keymap.set("n", "<leader>w_", "<C-w>_")
+vim.keymap.set("n", "<leader>w=", "<C-w>=")
+vim.keymap.set("n", "<leader>w|", "<C-w>|")
+vim.keymap.set("n", "<leader>wo", "<C-w>|<C-w>_")
+
 -- move selected line up/down and auto-fix indentation
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move selected line up and fix indentation" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move selected line down and fix indentation" })
